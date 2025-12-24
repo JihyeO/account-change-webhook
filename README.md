@@ -1,3 +1,45 @@
+# 실행 방법
+
+요약: 로컬에서 애플리케이션을 실행하려면 JDK 17과 Gradle wrapper(내장)를 사용합니다. 데이터베이스 초기화는 `src/main/resources/schema.sql`이 애플리케이션 시작 시 자동으로 실행되도록 설정되어 있습니다.
+
+Prerequisites:
+
+- JDK 17
+- Git, Gradle wrapper (프로젝트에 포함됨)
+
+Quick start (Windows PowerShell):
+
+```powershell
+$Env:WEBHOOK_SECRET = 'your_secret_here'
+mkdir -Force db
+./gradlew.bat bootRun
+```
+
+Quick start (macOS / Linux):
+
+```bash
+export WEBHOOK_SECRET=your_secret_here
+mkdir -p db
+./gradlew bootRun
+```
+
+Build jar and run:
+
+```bash
+./gradlew bootJar
+java -jar build/libs/*-0.0.1-SNAPSHOT.jar
+```
+
+Run tests:
+
+```bash
+./gradlew test
+```
+
+DB initialization:
+
+- `schema.sql` (SQLite) 는 `spring.sql.init.mode=always` 설정으로 애플리케이션 시작 시 `db/webhook.db`에 테이블을 생성합니다. 수동 초기화가 필요하면 `sqlite3 db/webhook.db < src/main/resources/schema.sql`로 적용하세요. <br><br>
+
 # API 명세 요약
 
 ## 1) Webhook 수신
