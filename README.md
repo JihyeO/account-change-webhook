@@ -1,54 +1,64 @@
-# account-change-webhook
+# API 명세 요약
 
-## 기능적 요구사항 분석
+## 1) Webhook 수신
 
-### 1. Webhok 수신 및 검증
+- 경로: `POST /webhooks/account-changes`
+- 설명: 외부에서 계정 변경 이벤트를 수신하여 HMAC 검증 후 이벤트로 저장하거나 상태에 따라 응답합니다.
+- 필수 헤더:
+  - `X-Signature`: HMAC-SHA256 hex (서명 검증에 사용)
+  - `X-Event-Id`: 이벤트 고유 ID (중복 방지 및 조회 키)
+- 요청 바디: raw JSON (서비스는 PoC로 `type`, `accountKey`, `provider`를 간단 추출함)
+- 응답: 200 OK (본문 문자열: `accepted`, `이미 처리됨`, `처리 중` 등), 400/401 에러 가능
 
-- 서버는 환경변수 WEBHOOK_SECRET 기반으로 HMAC을 검증한다.
-- 서명 검증 실패 시 401 또는 403을 반환한다.
+## 2) 계정 조회
 
-### 2. Idempotency
+- 경로: `GET /accounts/{accountKey}`
+- 설명: 계정 정보를 `accountKey`로 조회
+- 응답: 200 OK (Account 객체 JSON) 또는 404 Not Found
 
-- X-Event-Id 기준으로 중복 이벤트를 감지한다.
-- 동일 eventId가 재전송되면 아래 case에 따라 응답한다.
-  - 이미 처리 완료 시: 200과 함께 "이미 처리됨" 응답
-  - 처리 중인 경우: 200과 함께 "처리 중" 응답
+## 3) 이벤트 조회 (Inbox)
 
-### 3. 이벤트 저장 및 처리 상태 관리
+- 경로: `GET /inbox/events/{eventId}`
+- 설명: 저장된 이벤트를 `eventId`로 조회
+- 응답: 200 OK (Event 객체 JSON) 또는 404 Not Found
 
-- 이벤트는 저장되어야 한다.
-- 최소 상태는 RECEIVED -> PROCESSING -> DONE 또는 FAILED를 포함한다.
-- Webhook 요청은 빠르게 반환해야 한다.
+## 응답 모델 요약
 
-### 4. 처리해야 하는 이벤트
+- `Event`:
+  - `id`: number | null
+  - `eventId`: string
+  - `type`: string
+  - `accountKey`: string | null
+  - `provider`: string | null
+  - `payload`: string | null
+  - `status`: string (예: RECEIVED, QUEUED, PROCESSING, DONE)
+  - `attempts`: integer
+  - `errorMessage`: string | null
+- `Account`:
+  - `id`: number | null
+  - `accountKey`: string
+  - `parentAccountKey`: string | null
+  - `email`: string | null
+  - `emailForwarding`: boolean
+  - `status`: string
 
-- EMAIL_FORWARDING_CHANGED: 계정의 이메일을 갱신
-- ACCOUNT_DELETED: 계정 상태를 DELETED로 변경
-- {APPLE}\_ACCOUNT_DELETED: 계정 상태를 {APPLE}\_DELETED로 변경 (사용자가 {APPLE}계정을 영구 삭제한 경우 같은 “상위 계정 레벨의 사건”임)
+## 보안/운영 메모
 
-### 5. 필수 API
+- 서명 검증에 필요한 시크릿: 환경변수 `WEBHOOK_SECRET`
+- 현재 페이로드 파싱은 정규식 기반 PoC임 — 프로덕션에서는 Jackson 등 JSON 파서 사용
 
-1. Webhook 수신
-   POST /webhooks/account-changes
-2. 계정 상태 조회
-   GET /accounts/{accountKey}
-3. 이벤트 처리 결과 조회
-   GET /inbox/events/{eventId}
-4. (선택) 처리 트리거
-   POST /inbox/process
+### `WEBHOOK_SECRET` 설정 (환경변수)
 
-   비동기 처리 방식을 선택한 경우, 수동 트리거/테스트 편의를 위해 제공 가능, 스케줄러로 대체해도 무방
+- 필수: 애플리케이션 시작 전에 `WEBHOOK_SECRET` 환경변수가 설정되어야 합니다.
+- 예시 (로컬 macOS/Linux):
 
-## 비기능적 요구사항 분석
+  ```bash
+  export WEBHOOK_SECRET=your_secret_here
+  ./gradlew bootRun
+  ```
 
-### 1. 동시성
-
-- 동일한 이벤트가 중복되어 처리되지 않도록 해야한다. (트랜잭션 / 락 사용)
-
-### 2. 성능
-
-- Webhook 요청을 빠르게 반환하기 위해 처리해야 한다. (메시지 큐 등)
-
-### 3. 유지보수성
-
-- 모든 기능에 대해 최소 1개 이상의 테스트케이스를 작성해야 한다.
+- 예시 (Windows PowerShell):
+  ```powershell
+  $Env:WEBHOOK_SECRET = 'your_secret_here'
+  ./gradlew bootRun
+  ```
