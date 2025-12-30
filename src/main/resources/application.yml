@@ -1,4 +1,8 @@
 spring:
+  # If a file named `application-local.yml` exists at project root, import it automatically.
+  # This allows local-only overrides (e.g. webhook.secret) without setting profiles or env vars.
+  config:
+    import: optional:file:./application-local.yml
   datasource:
     url: jdbc:sqlite:db/webhook.db
     driver-class-name: org.sqlite.JDBC
@@ -12,3 +16,7 @@ server:
 logging:
   level:
     root: INFO
+
+# Local webhook secret placeholder. Do not store real secrets here in VCS.
+webhook:
+  secret: ""

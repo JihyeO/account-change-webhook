@@ -11,11 +11,14 @@ import org.springframework.web.server.ResponseStatusException
 @Service
 class EventService(
     private val repo: EventRepository,
-        @Value("\${WEBHOOK_SECRET}")
+        @Value("\${webhook.secret:\${WEBHOOK_SECRET:}}")
     private val webhookSecret: String
 ) {
 
     fun handleWebhook(rawBody: ByteArray, signatureHeader: String?, eventIdHeader: String?): String {
+        if (webhookSecret.isBlank()) {
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Webhook secret is not configured. Set 'webhook.secret' (application-local.yml) or 'WEBHOOK_SECRET' env var.")
+        }
         if (signatureHeader.isNullOrBlank() || eventIdHeader.isNullOrBlank()) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing required headers")
         }

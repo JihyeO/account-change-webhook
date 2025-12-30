@@ -9,8 +9,19 @@ Prerequisites:
 
 Quick start (Windows PowerShell):
 
+Note: 이 저장소는 `src/main/resources/application.yml`에서 프로젝트 루트의 `application-local.yml`을 자동으로 임포트하도록 설정되어 있습니다. 따라서 로컬 개발 시에는 루트에 `application-local.yml`을 두면 별도 프로파일이나 환경변수를 설정하지 않아도 로컬 설정(`webhook.secret`)이 적용됩니다.
+
+Option A — 로컬 전용 파일 사용(권장 개발 방식): 루트에 `application-local.yml`을 생성하고 `webhook.secret: test`처럼 설정합니다. 이후 평소처럼 실행하면 로컬 파일이 자동으로 적용됩니다.
+
+Option B — 간단히 환경변수 사용:
+
 ```powershell
 $Env:WEBHOOK_SECRET = 'your_secret_here'
+mkdir -Force db
+./gradlew.bat bootRun
+```
+
+```powershell
 mkdir -Force db
 ./gradlew.bat bootRun
 ```
@@ -18,7 +29,6 @@ mkdir -Force db
 Quick start (macOS / Linux):
 
 ```bash
-export WEBHOOK_SECRET=your_secret_here
 mkdir -p db
 ./gradlew bootRun
 ```
@@ -89,21 +99,30 @@ DB initialization:
 - 서명 검증에 필요한 시크릿: 환경변수 `WEBHOOK_SECRET`
 - 현재 페이로드 파싱은 정규식 기반 PoC임 — 프로덕션에서는 Jackson 등 JSON 파서 사용
 
-### `WEBHOOK_SECRET` 설정 (환경변수)
+### 로컬 전용 설정 파일 (권장 개발 방식)
 
-- 필수: 애플리케이션 시작 전에 `WEBHOOK_SECRET` 환경변수가 설정되어야 합니다.
-- 예시 (로컬 macOS/Linux):
+개발 시 시크릿을 코드에 직접 두지 않으려면 `application-local.yml` 파일을 프로젝트 루트에 만들어 사용하세요. 이 파일은 이미 `.gitignore`에 추가되어 있으므로 깃에 커밋되지 않습니다.
 
-  ```bash
-  export WEBHOOK_SECRET=your_secret_here
-  ./gradlew bootRun
-  ```
+예시(`application-local.yml`):
 
-- 예시 (Windows PowerShell):
-  ```powershell
-  $Env:WEBHOOK_SECRET = 'your_secret_here'
-  ./gradlew bootRun
-  ```
+```yaml
+webhook:
+  secret: test
+```
+
+설정 방법(간단):
+
+- 이 저장소는 `application.yml`에서 루트의 `application-local.yml`을 자동으로 임포트하도록 설정되어 있습니다. 따라서 별도 프로파일을 지정하지 않아도 프로젝트 루트에 `application-local.yml`을 두면 애플리케이션이 이를 읽어옵니다.
+
+실행 예시 (Windows PowerShell):
+
+```powershell
+# application-local.yml에 webhook.secret: test 와 같이 설정해 두었다고 가정
+mkdir -Force db
+./gradlew.bat bootRun
+```
+
+원한다면 `SPRING_PROFILES_ACTIVE=local`로 기존 방식처럼 실행할 수도 있습니다. (자동 임포트는 로컬 개발 편의성을 위한 기능입니다.)
 
 ## Swagger UI로 API 문서 확인 및 테스트
 
