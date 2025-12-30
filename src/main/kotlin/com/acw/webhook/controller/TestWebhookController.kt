@@ -10,11 +10,11 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as OasRequestBody
 
 @RestController
 @RequestMapping("/webhooks")
-class WebhookController(private val service: EventService) {
+class TestWebhookController(private val service: EventService) {
 
-    @PostMapping("/account-changes")
-    @Operation(summary = "Receive account change webhook", description = "수신된 webhook을 검증하고 저장/응답합니다")
-    fun receiveWebhook(
+    @PostMapping("/account-changes/test")
+    @Operation(summary = "Test receive webhook", description = "테스트용 엔드포인트: Swagger UI에서 바디/헤더를 입력해 호출")
+    fun receiveWebhookTest(
         @Parameter(name = "X-Signature", description = "HMAC-SHA256 hex", required = false, `in` = ParameterIn.HEADER)
         @RequestHeader(value = "X-Signature", required = false) signature: String?,
 

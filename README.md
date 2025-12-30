@@ -104,3 +104,37 @@ DB initialization:
   $Env:WEBHOOK_SECRET = 'your_secret_here'
   ./gradlew bootRun
   ```
+
+## Swagger UI로 API 문서 확인 및 테스트
+
+애플리케이션을 실행하면 자동으로 OpenAPI 문서가 생성되고 Swagger UI에서 직접 호출해 볼 수 있습니다.
+
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
+실행 (Windows PowerShell):
+
+```powershell
+$Env:WEBHOOK_SECRET = 'your_secret_here'
+./gradlew.bat bootRun
+```
+
+테스트용 엔드포인트 예시 (Swagger UI나 curl에서 사용):
+
+- 엔드포인트: `POST /webhooks/account-changes/test`
+- 필요한 헤더: `X-Signature`, `X-Event-Id`
+
+curl 예시:
+
+```bash
+curl -X POST 'http://localhost:8080/webhooks/account-changes/test' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Signature: <signature>' \
+  -H 'X-Event-Id: evt-123' \
+  -d '{"type":"ACCOUNT_UPDATED","accountKey":"abc123","provider":"bank","data":{"email":"user@example.com"}}'
+```
+
+설명:
+
+- Swagger UI에서 바디를 직접 입력하고 `X-Signature`, `X-Event-Id` 헤더를 추가하면 즉시 호출해볼 수 있습니다.
+- 실제 프로덕션 수신점은 `POST /webhooks/account-changes`입니다. Swagger로 바로 바디와 헤더를 편하게 테스트하려면 위의 `/test` 엔드포인트를 사용하세요.
